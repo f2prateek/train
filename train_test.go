@@ -24,7 +24,7 @@ func TestFallThroughInterceptor(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{
-		Transport: train.Train(fallThrough),
+		Transport: train.New(fallThrough),
 	}
 
 	resp, err := client.Get(ts.URL)
@@ -64,7 +64,7 @@ func TestInterceptorCanShortCircuit(t *testing.T) {
 	m2 := NewMockInterceptor()
 
 	client := &http.Client{
-		Transport: train.Train(fallThrough, m1, m2),
+		Transport: train.New(fallThrough, m1, m2),
 	}
 
 	resp, err := client.Get("https://golang.org/")

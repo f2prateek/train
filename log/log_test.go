@@ -14,7 +14,7 @@ import (
 func ExampleNew() {
 	var buf bytes.Buffer
 	client := &http.Client{
-		Transport: train.Train(log.New(&buf)),
+		Transport: train.New(log.New(&buf)),
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
