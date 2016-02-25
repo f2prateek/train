@@ -20,7 +20,7 @@ type loggingInterceptor struct {
 func (interceptor *loggingInterceptor) Intercept(chain train.Chain) (*http.Response, error) {
 	req := chain.Request()
 
-	requestDump, err := httputil.DumpRequest(req, true)
+	requestDump, err := httputil.DumpRequestOut(req, true)
 	if err != nil {
 		return nil, err
 	}
