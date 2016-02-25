@@ -17,7 +17,7 @@ func (f InterceptorFunc) Intercept(c Chain) (*http.Response, error) {
 	return f(c)
 }
 
-func New(interceptors ...Interceptor) http.RoundTripper {
+func Transport(interceptors ...Interceptor) http.RoundTripper {
 	return &interceptorRoundTripper{
 		interceptors: append([]Interceptor{}, interceptors...),
 	}

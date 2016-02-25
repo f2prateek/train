@@ -9,7 +9,7 @@ import "github.com/f2prateek/train"
 import "github.com/f2prateek/train/log"
 import "github.com/foo/stats"
 
-transport := train.New(log.New(os.Stdout), stats.New())
+transport := train.Transport(log.New(os.Stdout), stats.New())
 
 client := &http.Client{
   Transport: transport,
