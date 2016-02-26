@@ -2,12 +2,12 @@
 
 Chainable HTTP client middleware. Borrowed from [OkHttp](https://github.com/square/okhttp/wiki/Interceptors).
 
-For example, given the builtin logging interceptor and a hypothetical stats interceptor:
+For example, you can use the provided logging and statsd interceptor to instrument all calls to an http client.
 
 ```go
 import "github.com/f2prateek/train"
 import "github.com/f2prateek/train/log"
-import "github.com/foo/stats"
+import "github.com/f2prateek/train/statsd"
 
 transport := train.Transport(log.New(os.Stdout), stats.New())
 
