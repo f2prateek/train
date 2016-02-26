@@ -9,18 +9,35 @@ import (
 	"github.com/f2prateek/train"
 )
 
-func New(out io.Writer) train.Interceptor {
-	return &loggingInterceptor{out}
+type Level uint8
+
+const (
+	None Level = iota
+	Basic
+	Body
+)
+
+func New(out io.Writer, level Level) train.Interceptor {
+	return &loggingInterceptor{
+		out:   out,
+		level: level,
+	}
 }
 
 type loggingInterceptor struct {
-	out io.Writer
+	out   io.Writer
+	level Level
 }
 
 func (interceptor *loggingInterceptor) Intercept(chain train.Chain) (*http.Response, error) {
 	req := chain.Request()
+	if interceptor.level == None {
+		return chain.Proceed(req)
+	}
 
-	requestDump, err := httputil.DumpRequestOut(req, true)
+	logBody := interceptor.level == Body
+
+	requestDump, err := httputil.DumpRequestOut(req, logBody)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +45,7 @@ func (interceptor *loggingInterceptor) Intercept(chain train.Chain) (*http.Respo
 
 	resp, err := chain.Proceed(req)
 
-	responseDump, err := httputil.DumpResponse(resp, true)
+	responseDump, err := httputil.DumpResponse(resp, logBody)
 	if err != nil {
 		return nil, err
 	}
