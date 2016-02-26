@@ -1,10 +1,12 @@
 package log
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"sync"
 
 	"github.com/f2prateek/train"
 )
@@ -27,6 +29,7 @@ func New(out io.Writer, level Level) train.Interceptor {
 type loggingInterceptor struct {
 	out   io.Writer
 	level Level
+	sync.Mutex
 }
 
 func (interceptor *loggingInterceptor) Intercept(chain train.Chain) (*http.Response, error) {
@@ -35,13 +38,15 @@ func (interceptor *loggingInterceptor) Intercept(chain train.Chain) (*http.Respo
 		return chain.Proceed(req)
 	}
 
+	// Use a temp buffer so that a request/response pair always appears in order.
+	var buf bytes.Buffer
 	logBody := interceptor.level == Body
 
 	requestDump, err := httputil.DumpRequestOut(req, logBody)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Fprintf(interceptor.out, "%s", requestDump)
+	fmt.Fprintf(&buf, "%s", requestDump)
 
 	resp, err := chain.Proceed(req)
 
@@ -49,7 +54,11 @@ func (interceptor *loggingInterceptor) Intercept(chain train.Chain) (*http.Respo
 	if err != nil {
 		return nil, err
 	}
-	fmt.Fprintf(interceptor.out, "%s", responseDump)
+	fmt.Fprintf(&buf, "%s", responseDump)
+
+	interceptor.Lock()
+	io.Copy(interceptor.out, &buf)
+	interceptor.Unlock()
 
 	return resp, err
 }
