@@ -8,6 +8,15 @@ import (
 	"github.com/statsd/client-interface"
 )
 
+// New returns a statsd interceptor that logs the following metrics:
+// * requests (counter) - request count
+// * requests.method.<method> (counter) - requests by method
+// * request.size (timer) - request content-length
+// * response.ok (counter) - successful requests
+// * response.errors.client (counter) - client errors
+// * response.errors.server (counter) - server errors
+// * response.duration (timer) - request duration
+// * response.size (timer) - response size in bytes
 func New(stats statsd.Client) train.Interceptor {
 	return &statsdInterceptor{stats}
 }

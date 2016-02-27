@@ -14,11 +14,15 @@ import (
 type Level uint8
 
 const (
+	// Logs nothing.
 	None Level = iota
+	// Logs request and response lines and their respective headers.
 	Basic
+	// Logs request and response lines and their respective headers and bodies (if present).
 	Body
 )
 
+// New returns a logging interceptor with the given level that writes to the given writer.
 func New(out io.Writer, level Level) train.Interceptor {
 	return &loggingInterceptor{
 		out:   out,
