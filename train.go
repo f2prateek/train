@@ -1,11 +1,12 @@
+// Package train provides a http.RoundTripper with chainable middleware.
 package train
 
 import "net/http"
 
 type Chain interface {
-	// Request returns the `http.Request` for this chain.
+	// Request returns the http.Request for this chain.
 	Request() *http.Request
-	// Proceed returns the chain with a given request and returns the result.
+	// Proceed the chain with a given request and returns the result.
 	Proceed(*http.Request) (*http.Response, error)
 }
 
@@ -26,7 +27,7 @@ func (f InterceptorFunc) Intercept(c Chain) (*http.Response, error) {
 	return f(c)
 }
 
-// Return a new `http.RoundTripper` with the given interceptors. Interceptors will be called in the order
+// Return a new http.RoundTripper with the given interceptors. Interceptors will be called in the order
 // they are provided.
 func Transport(interceptors ...Interceptor) http.RoundTripper {
 	return &interceptorRoundTripper{

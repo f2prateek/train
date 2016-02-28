@@ -89,6 +89,7 @@ func TestInterceptorCanShortCircuit(t *testing.T) {
 
 func ExampleTransport() {
 	client := &http.Client{
+		// Try changing the log level!
 		Transport: train.Transport(log.New(os.Stdout, log.None)),
 	}
 
