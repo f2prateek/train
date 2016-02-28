@@ -1,13 +1,16 @@
 package train_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/bmizerany/assert"
 	"github.com/f2prateek/train"
+	"github.com/f2prateek/train/log"
 	"github.com/gohttp/response"
 	"github.com/stretchr/testify/mock"
 )
@@ -82,4 +85,21 @@ func TestInterceptorCanShortCircuit(t *testing.T) {
 	// Assert our mocks.
 	m1.AssertExpectations(t)
 	m2.AssertExpectations(t)
+}
+
+func ExampleTransport() {
+	client := &http.Client{
+		Transport: train.Transport(log.New(os.Stdout, log.None)),
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		response.OK(w, "Hello World!")
+	}))
+	defer ts.Close()
+
+	resp, _ := client.Get(ts.URL)
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	fmt.Println(string(bytes))
+	// Output: Hello World!
 }
