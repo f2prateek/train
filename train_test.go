@@ -5,8 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/bmizerany/assert"
 	"github.com/f2prateek/train"
@@ -73,6 +75,22 @@ func TestInterceptorCanShortCircuit(t *testing.T) {
 	// Assert our mocks.
 	shortCircuitInterceptor.AssertExpectations(t)
 	m.AssertExpectations(t)
+}
+
+func TestCancel(t *testing.T) {
+	client := &http.Client{
+		Transport: train.Transport(fallThrough),
+		Timeout:   1 * time.Second,
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		time.Sleep(5 * time.Second)
+		response.OK(w, "Hello World!")
+	}))
+	defer ts.Close()
+
+	_, err := client.Get(ts.URL)
+	assert.Equal(t, "net/http: request canceled (Client.Timeout exceeded while awaiting headers)", err.(*url.Error).Err.Error())
 }
 
 func ExampleTransport() {
