@@ -11,6 +11,7 @@ import (
 	"github.com/bmizerany/assert"
 	"github.com/f2prateek/train"
 	"github.com/f2prateek/train/log"
+	"github.com/f2prateek/train/mocks"
 	"github.com/gohttp/response"
 	"github.com/stretchr/testify/mock"
 )
@@ -41,33 +42,20 @@ func TestFallThroughInterceptor(t *testing.T) {
 	assert.Equal(t, "Hello World!\n", string(body))
 }
 
-type MockInterceptor struct {
-	mock.Mock
-}
-
-func (m *MockInterceptor) Intercept(chain train.Chain) (*http.Response, error) {
-	args := m.Called(chain)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
-
-func NewMockInterceptor() *MockInterceptor {
-	return new(MockInterceptor)
-}
-
 func TestInterceptorCanShortCircuit(t *testing.T) {
-	m1 := NewMockInterceptor()
+	shortCircuitInterceptor := mocks.New()
 	{
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			response.OK(w, "Hello World!")
 		}))
 		defer ts.Close()
 		resp, err := http.Get(ts.URL)
-		m1.On("Intercept", mock.AnythingOfType("*train.interceptorChain")).Return(resp, err)
+		shortCircuitInterceptor.On("Intercept", mock.AnythingOfType("*train.interceptorChain")).Return(resp, err)
 	}
-	m2 := NewMockInterceptor()
+	m := mocks.New()
 
 	client := &http.Client{
-		Transport: train.Transport(fallThrough, m1, m2),
+		Transport: train.Transport(fallThrough, shortCircuitInterceptor, m),
 	}
 
 	resp, err := client.Get("https://golang.org/")
@@ -83,8 +71,8 @@ func TestInterceptorCanShortCircuit(t *testing.T) {
 	assert.Equal(t, "Hello World!\n", string(body))
 
 	// Assert our mocks.
-	m1.AssertExpectations(t)
-	m2.AssertExpectations(t)
+	shortCircuitInterceptor.AssertExpectations(t)
+	m.AssertExpectations(t)
 }
 
 func ExampleTransport() {
