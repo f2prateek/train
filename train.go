@@ -27,16 +27,25 @@ func (f InterceptorFunc) Intercept(c Chain) (*http.Response, error) {
 	return f(c)
 }
 
-// Return a new http.RoundTripper with the given interceptors. Interceptors will be called in the order
-// they are provided.
+// Return a new http.RoundTripper with the given interceptors and http.DefaultTransport.
+// Interceptors will be called in the order they are provided.
 func Transport(interceptors ...Interceptor) http.RoundTripper {
+	return TransportWith(http.DefaultTransport, interceptors...)
+}
+
+// Return a new http.RoundTripper with the given interceptors and a custom http.RoundTripper
+// to perform the actual HTTP request. Interceptors will be called in the order they are
+// provided.
+func TransportWith(transport http.RoundTripper, interceptors ...Interceptor) http.RoundTripper {
 	return &interceptorRoundTripper{
 		interceptors: append([]Interceptor{}, interceptors...),
+		transport:    transport,
 	}
 }
 
 type interceptorRoundTripper struct {
 	interceptors []Interceptor
+	transport    http.RoundTripper
 }
 
 func (i *interceptorRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -44,6 +53,7 @@ func (i *interceptorRoundTripper) RoundTrip(req *http.Request) (*http.Response, 
 		index:        0,
 		request:      req,
 		interceptors: i.interceptors,
+		transport:    i.transport,
 	}
 	return chain.Proceed(req)
 }
@@ -52,6 +62,7 @@ type interceptorChain struct {
 	index        int
 	request      *http.Request
 	interceptors []Interceptor
+	transport    http.RoundTripper
 }
 
 func (c *interceptorChain) Request() *http.Request {
@@ -65,11 +76,12 @@ func (c *interceptorChain) Proceed(req *http.Request) (*http.Response, error) {
 			index:        c.index + 1,
 			request:      req,
 			interceptors: c.interceptors,
+			transport:    c.transport,
 		}
 		interceptor := c.interceptors[c.index]
 		return interceptor.Intercept(chain)
 	}
 
 	// No more interceptors. Do HTTP.
-	return http.DefaultTransport.RoundTrip(req)
+	return c.transport.RoundTrip(req)
 }
