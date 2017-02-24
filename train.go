@@ -27,6 +27,13 @@ func (f InterceptorFunc) Intercept(c Chain) (*http.Response, error) {
 	return f(c)
 }
 
+// RoundTripper adapts an `http.RoundTripper` to an `Interceptor`.
+func RoundTripper(rt http.RoundTripper) Interceptor {
+	return InterceptorFunc(func(chain Chain) (*http.Response, error) {
+		return rt.RoundTrip(chain.Request())
+	})
+}
+
 // Return a new http.RoundTripper with the given interceptors and http.DefaultTransport.
 // Interceptors will be called in the order they are provided.
 func Transport(interceptors ...Interceptor) http.RoundTripper {
