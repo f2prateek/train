@@ -34,6 +34,16 @@ func RoundTripper(rt http.RoundTripper) Interceptor {
 	})
 }
 
+// UserAgent returns an `Interceptor` that sets the user-agent on outgoing requests.
+func UserAgent(userAgent string) Interceptor {
+	return InterceptorFunc(func(chain Chain) (*http.Response, error) {
+		req := chain.Request()
+		req.Header.Add("User-Agent", userAgent)
+		resp, err := chain.Proceed(req)
+		return resp, err
+	})
+}
+
 // Return a new http.RoundTripper with the given interceptors and http.DefaultTransport.
 // Interceptors will be called in the order they are provided.
 func Transport(interceptors ...Interceptor) http.RoundTripper {
